@@ -20,13 +20,17 @@ The goal is for this to publish this as a dotnet global tool, but for now it's a
 * [ ] Capture config settings & values
   * [X] app.confg
   * [X] web.config
-  * [ ] appSettings.*.json
+  * [ ] appSettings.json
 * [ ] Capture DB connection string names & values
-  * [ ] app.confg
-  * [ ] web.config
-  * [ ] appSettings.*.json
+  * [X] app.confg
+  * [X] web.config
+  * [ ] appSettings.json
 * [ ] Capture remote/WCF service references/endpoint names & values
   * [ ] app.confg, web.config, etc.
+  * [ ] appSettings.*.json
+* [ ] Capture Environment transforms
+  * [ ] App.config
+  * [ ] Web.config
   * [ ] appSettings.*.json
 
 ## Queries to Run
