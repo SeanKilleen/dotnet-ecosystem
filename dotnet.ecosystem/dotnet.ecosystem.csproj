@@ -11,6 +11,7 @@
     <PackageReference Include="akka" Version="1.5.8" />
     <PackageReference Include="spectre.console" Version="0.47.0" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.47.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
 </Project>
