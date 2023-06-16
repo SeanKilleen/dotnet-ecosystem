@@ -50,3 +50,10 @@ MATCH (p:Project)-[r:TARGETS]->(t:Target)
 WHERE p.name = "Converter.Tests.csproj"
 return t.name
 ```
+
+### Count of Project by SDK
+
+```cypher
+MATCH (p:Project)-[r:HAS_SDK]->(s:SDK)
+Return s.name, count(*)
+```
