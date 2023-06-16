@@ -35,6 +35,14 @@ where n.name = "FluentAssertions"
 return p.name, r.version
 ```
 
+### Count of Versions of a Nuget Package
+
+```cypher
+MATCH (p:Project)-[r:USES]->(n:NugetPackage)
+where n.name = "FluentAssertions"
+return r.version, count(*)
+```
+
 ### List of Packages With a Given Target
 
 ```cypher
