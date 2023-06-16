@@ -41,63 +41,18 @@ public class CsProjectProcessor : ReceiveActor
 
             _graphActor.Tell(new Messages.SpecifySdk(msg.File.DirectoryName, msg.File.Name, projectFile.Sdk));
 
-            var xmlText = await File.ReadAllTextAsync(msg.File.FullName);
-            var xDoc = XDocument.Parse(xmlText);
-
-            var packageRefElements = xDoc.Descendants("PackageReference");
-
             List<PackageReference> packageReferences = new();
-            foreach (var packageRefElement in packageRefElements)
-            {
-                var name = packageRefElement.AttributeCaseInsensitive("Include");
-                var version = packageRefElement.AttributeCaseInsensitive("Version");
 
-                if (name == null)
-                {
-                    _log.Warning("Name was null when retrieving a PackageReference as part of {ProjectName}", msg.File.Name);
-                }
-
-                if (version == null)
-                {
-                    _log.Warning("Version was null when retrieving a PackageReference as part of {ProjectName}", msg.File.Name);
-                }
-
-                if (name != null && version != null)
-                {
-                    packageReferences.Add(new PackageReference(name.Value, version.Value));
-                }
-            }
+            var extractedPackageRefs = await ExtractPackageFromXMLFile(msg.File.FullName, "PackageReference", "Include", "Version");
+            packageReferences.AddRange(extractedPackageRefs);
 
             var packagesConfigPath = Path.Combine(msg.File.DirectoryName, "packages.config");
             if (File.Exists(packagesConfigPath))
             {
                 _log.Info("Found packages.config for {ProjectName}; processing.", msg.File.Name);
 
-                var packagesConfigXmlText = await File.ReadAllTextAsync(packagesConfigPath);
-                var packagesConfigXDoc = XDocument.Parse(packagesConfigXmlText);
-
-                var packages = packagesConfigXDoc.Descendants().Where(x => string.Equals(x.Name.LocalName, "package", StringComparison.InvariantCultureIgnoreCase));
-
-                foreach (var package in packages)
-                {
-                    var name = package.AttributeCaseInsensitive("id");
-                    var version = package.AttributeCaseInsensitive("version");
-
-                    if (name == null)
-                    {
-                        _log.Warning("Name was null when retrieving a packages.config reference as part of {ProjectName}", msg.File.Name);
-                    }
-
-                    if (version == null)
-                    {
-                        _log.Warning("Version was null when retrieving a packages.config reference as part of {ProjectName}", msg.File.Name);
-                    }
-
-                    if (name != null && version != null)
-                    {
-                        packageReferences.Add(new PackageReference(name.Value, version.Value));
-                    }
-                }
+                var extractedPackages = await ExtractPackageFromXMLFile(packagesConfigPath, "package", "id", "version");
+                packageReferences.AddRange(extractedPackages);
             }
 
 
@@ -106,6 +61,40 @@ public class CsProjectProcessor : ReceiveActor
             _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, packageReferences));
 
         });
+    }
+
+    private async Task<List<PackageReference>> ExtractPackageFromXMLFile(string path, string elementName, string idAttributeName,
+        string versionAttributeName)
+    {
+        List<PackageReference> result = new();
+
+        var xmlText = await File.ReadAllTextAsync(path);
+        var xDoc = XDocument.Parse(xmlText);
+
+        var packages = xDoc.Descendants().Where(x => string.Equals(x.Name.LocalName, elementName, StringComparison.InvariantCultureIgnoreCase));
+
+        foreach (var package in packages)
+        {
+            var name = package.AttributeCaseInsensitive(idAttributeName);
+            var version = package.AttributeCaseInsensitive(versionAttributeName);
+
+            if (name == null)
+            {
+                _log.Warning("Name was null when retrieving a packages.config reference as part of {ProjectPath}", path);
+            }
+
+            if (version == null)
+            {
+                _log.Warning("Version was null when retrieving a packages.config reference as part of {ProjectPath}", path);
+            }
+
+            if (name != null && version != null)
+            {
+                result.Add(new PackageReference(name.Value, version.Value));
+            }
+        }
+
+        return result;
     }
 }
 
