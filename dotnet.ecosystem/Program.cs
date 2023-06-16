@@ -1,12 +1,18 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using Akka.Actor;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-var app = new CommandApp<EcosystemCommand>();
 
-return app.Run(args);
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Hello, World!");
+    }
+}
 
 internal sealed class EcosystemCommand : Command<EcosystemCommand.Settings>
 {
@@ -14,6 +20,8 @@ internal sealed class EcosystemCommand : Command<EcosystemCommand.Settings>
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
         AnsiConsole.MarkupLine($"[red]R[/][green]G[/][blue]B[/] - Scan Folder is [yellow]{settings.ScanFolder}[/]");
+
+
         return 0;
     }
 
