@@ -37,11 +37,12 @@ public class CsProjectProcessor : ReceiveActor
 
             _graphActor.Tell(new Messages.SpecifyTargets(msg.File.DirectoryName, msg.File.Name, targetFrameworks));
 
-            var packageReferences = projectFile.ItemDefinitions.Where(x => x.ElementName == "PackageReference").ToList();
+            var packageReferences = projectFile.Items.Where(x => x.ElementName == "PackageReference").ToList();
 
             _log.Info("Found {PackageReferenceCount} package references for {ProjectName}", packageReferences.Count, msg.File.Name);
-
 
         });
     }
 }
+
+public record PackageReference(string Name, string Version);
