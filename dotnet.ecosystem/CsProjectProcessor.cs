@@ -60,6 +60,13 @@ public class CsProjectProcessor : ReceiveActor
 
             _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, packageReferences));
 
+            var appConfigPath = Path.Combine(msg.File.DirectoryName, "app.config");
+            if (File.Exists(appConfigPath))
+            {
+                _log.Info("Found app.config for {ProjectName}; processing.", msg.File.Name);
+
+            }
+
         });
     }
 
