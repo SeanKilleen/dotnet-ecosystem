@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Akka.Actor;
 using Akka.Event;
+using Microsoft.Build.Construction;
 using Neo4j.Driver;
 using Serilog;
 using Spectre.Console;
@@ -16,6 +17,7 @@ public class Messages
     public record FindProjects(string Path);
     public record ProcessProject(FileInfo File);
     public record AddProjectToGraph(string Directory, string ProjectFileName);
+    public record SpecifyTargets(string Directory, string ProjectFileName, IReadOnlyList<string> Targets);
 }
 
 public class GraphActor : ReceiveActor
@@ -43,7 +45,23 @@ public class GraphActor : ReceiveActor
                     MERGE (p:Project { path: $path, name: $name })
                     return p", new { path = msg.Directory, name = msg.ProjectFileName });
             });
+        });
 
+        ReceiveAsync<Messages.SpecifyTargets>(async msg =>
+        {
+            await using var session = _driver.AsyncSession();
+
+            foreach (var target in msg.Targets)
+            {
+                await session.ExecuteWriteAsync(async tr =>
+                {
+                    var cursor = await tr.RunAsync(@"
+                    MATCH (p:Project { path: $path, name: $name })
+                    MERGE(t:Target { name: $target })
+                    MERGE (p)-[:TARGETS]->(t)
+                    return p", new { path = msg.Directory, name = msg.ProjectFileName, target = target });
+                });
+            }
         });
     }
 }
@@ -64,6 +82,21 @@ public class CsProjectProcessor : ReceiveActor
             }
 
             _graphActor.Tell(new Messages.AddProjectToGraph(msg.File.DirectoryName, msg.File.Name));
+
+            // TODO: Own actor etc.
+            var projectFile = ProjectRootElement.Open(msg.File.FullName);
+
+            List<string> targetFrameworks = new();
+
+            var targetProperties = projectFile.Properties.Where(p => p.Name == "TargetFramework" || p.Name == "TargetFrameworks");
+            foreach (var targetProperty in targetProperties)
+            {
+                targetFrameworks.AddRange(targetProperty.Value.Split(';'));
+            }
+
+            _graphActor.Tell(new Messages.SpecifyTargets(msg.File.DirectoryName, msg.File.Name, targetFrameworks));
+
+
         });
     }
 }
