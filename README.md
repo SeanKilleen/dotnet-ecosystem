@@ -117,3 +117,10 @@ MATCH (p:Project)-[r:HAS_SETTING]->(s:AppSetting)
 where s.name = "MySetting"
 return p.name, r.value
 ```
+
+### All Connection Strings Across Projects
+
+```cypher
+MATCH (p:Project)-[r:HAS_CONNECTION_STRING]->(c:ConnectionString)
+return p.name, c.name, r.value, r.provider
+```
