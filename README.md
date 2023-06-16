@@ -15,6 +15,8 @@ The goal is for this to publish this as a dotnet global tool, but for now it's a
 * [X] Surface target frameworks of csproj files
 * [ ] Capture project references from csproj
 * [ ] Capture nuget packages and versions
+  * [X] csproj file PackageReference
+  * [ ] packages.config files
 * [ ] Capture config settings & values
   * [ ] app.confg, web.config, etc.
   * [ ] appSettings.*.json
