@@ -7,8 +7,8 @@ namespace dotnet.ecosystem;
 
 public class CsProjectProcessor : ReceiveActor
 {
-    ILoggingAdapter _log = Context.GetLogger();
-    ActorSelection _graphActor = Context.ActorSelection("../graphActor");
+    readonly ILoggingAdapter _log = Context.GetLogger();
+    readonly ActorSelection _graphActor = Context.ActorSelection("../graphActor");
 
     public CsProjectProcessor()
     {
