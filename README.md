@@ -67,3 +67,12 @@ return t.name
 MATCH (p:Project)-[r:HAS_SDK]->(s:SDK)
 Return s.name, count(*)
 ```
+
+### Anomalies
+
+Projects that don't have any associated nuget packages (to double-check the tool)
+
+```cypher
+MATCH (p:Project) WHERE NOT (p)-[:USES]->()
+return p.name
+```
