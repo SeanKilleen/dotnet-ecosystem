@@ -68,6 +68,39 @@ public class CsProjectProcessor : ReceiveActor
                 }
             }
 
+            var packagesConfigPath = Path.Combine(msg.File.DirectoryName, "packages.config");
+            if (File.Exists(packagesConfigPath))
+            {
+                _log.Info("Found packages.config for {ProjectName}; processing.", msg.File.Name);
+
+                var packagesConfigXmlText = await File.ReadAllTextAsync(packagesConfigPath);
+                var packagesConfigXDoc = XDocument.Parse(packagesConfigXmlText);
+
+                var packages = packagesConfigXDoc.Descendants().Where(x => string.Equals(x.Name.LocalName, "package", StringComparison.InvariantCultureIgnoreCase));
+
+                foreach (var package in packages)
+                {
+                    var name = package.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, "id", StringComparison.InvariantCultureIgnoreCase));
+                    var version = package.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, "version", StringComparison.InvariantCultureIgnoreCase));
+
+                    if (name == null)
+                    {
+                        _log.Warning("Name was null when retrieving a packages.config reference as part of {ProjectName}", msg.File.Name);
+                    }
+
+                    if (version == null)
+                    {
+                        _log.Warning("Version was null when retrieving a packages.config reference as part of {ProjectName}", msg.File.Name);
+                    }
+
+                    if (name != null && version != null)
+                    {
+                        packageReferences.Add(new PackageReference(name.Value, version.Value));
+                    }
+                }
+            }
+
+
             _log.Info("Found {PackageReferenceCount} package references for {ProjectName}", packageReferences.Count, msg.File.Name);
 
             _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, packageReferences));
