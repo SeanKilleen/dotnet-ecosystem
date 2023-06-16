@@ -27,4 +27,26 @@ The goal is for this to publish this as a dotnet global tool, but for now it's a
 
 ## Queries to Run
 
-Check back here soon for a list of queries.
+### List of versions of a given Nuget Package 
+
+```cypher
+MATCH (p:Project)-[r:USES]->(n:NugetPackage)
+where n.name = "FluentAssertions"
+return p.name, r.version
+```
+
+### List of Packages With a Given Target
+
+```cypher
+MATCH (p:Project)-[r:TARGETS]->(t:Target)
+where t.name = "net6.0"
+return p.name
+```
+
+### Targets for a Given Project
+
+```cypher
+MATCH (p:Project)-[r:TARGETS]->(t:Target)
+WHERE p.name = "Converter.Tests.csproj"
+return t.name
+```
