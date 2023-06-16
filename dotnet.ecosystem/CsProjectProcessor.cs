@@ -67,6 +67,16 @@ public class CsProjectProcessor : ReceiveActor
                 _graphActor.Tell(new Messages.SpecifyAppSettings(msg.File.DirectoryName, msg.File.Name, appSettings));
             }
 
+            var webConfigPath = Path.Combine(msg.File.DirectoryName, "web.config");
+            if (File.Exists(webConfigPath))
+            {
+                _log.Info("Found web.config for {ProjectName}; processing.", msg.File.Name);
+
+                var webSettings = await ExtractAppSettingsFromAppConfig(webConfigPath);
+                _log.Info("Extracted {SettingsCount} app settings from web.config for {ProjectName}", webSettings.Count, msg.File.Name);
+                _graphActor.Tell(new Messages.SpecifyAppSettings(msg.File.DirectoryName, msg.File.Name, webSettings));
+            }
+
         });
     }
 
