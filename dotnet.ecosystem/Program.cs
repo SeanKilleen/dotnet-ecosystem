@@ -6,8 +6,6 @@ using Spectre.Console.Cli;
 var app = new CommandApp<EcosystemCommand>();
 
 return app.Run(args);
-Console.WriteLine("Hello, World!");
-
 
 internal sealed class EcosystemCommand : Command<EcosystemCommand.Settings>
 {
