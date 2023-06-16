@@ -59,7 +59,7 @@ return p.name
 
 ```cypher
 MATCH (p:Project)-[r:TARGETS]->(t:Target)
-WHERE p.name = "Converter.Tests.csproj"
+WHERE p.name = "MyProject.csproj"
 return t.name
 ```
 
@@ -84,4 +84,13 @@ return p.name
 MATCH (p:Project)-[r:USES]->(n:NugetPackage)
 return n.name, count(*)
 order by count(*) desc
+```
+
+### Packages and Versions Used by a Project
+
+```cypher
+MATCH (p:Project)-[r:USES]->(n:NugetPackage)
+WHERE p.name = "MyProject.csproj"
+return n.name, r.version
+order by n.name
 ```
