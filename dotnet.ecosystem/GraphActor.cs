@@ -8,9 +8,9 @@ namespace dotnet.ecosystem;
 
 public class GraphActor : ReceiveActor
 {
-    ILoggingAdapter _log = Context.GetLogger();
+    readonly ILoggingAdapter _log = Context.GetLogger();
     // TODO: Obviously fix this
-    IDriver _driver = GraphDatabase.Driver(
+    readonly IDriver _driver = GraphDatabase.Driver(
     "bolt://localhost",
     AuthTokens.Basic(
         "neo4j",
