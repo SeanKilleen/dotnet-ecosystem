@@ -65,6 +65,10 @@ public class CsProjectProcessor : ReceiveActor
                 var appSettings = await ExtractAppSettingsFromAppConfig(appConfigPath);
                 _log.Info("Extracted {SettingsCount} app settings from app.config for {ProjectName}", appSettings.Count, msg.File.Name);
                 _graphActor.Tell(new Messages.SpecifyAppSettings(msg.File.DirectoryName, msg.File.Name, appSettings));
+
+                var appConnStrings = await ExtractConnectionStringsFromAppConfig(appConfigPath);
+                _log.Info("Extracted {ConnectionStringsCount} connection strings from app.config for {ProjectName}", appConnStrings.Count, msg.File.Name);
+                _graphActor.Tell(new Messages.SpecifyConnectionStrings(msg.File.DirectoryName, msg.File.Name, appConnStrings));
             }
 
             var webConfigPath = Path.Combine(msg.File.DirectoryName, "web.config");
@@ -75,11 +79,57 @@ public class CsProjectProcessor : ReceiveActor
                 var webSettings = await ExtractAppSettingsFromAppConfig(webConfigPath);
                 _log.Info("Extracted {SettingsCount} app settings from web.config for {ProjectName}", webSettings.Count, msg.File.Name);
                 _graphActor.Tell(new Messages.SpecifyAppSettings(msg.File.DirectoryName, msg.File.Name, webSettings));
+
+                var webConnStrings = await ExtractConnectionStringsFromAppConfig(webConfigPath);
+                _log.Info("Extracted {ConnectionStringsCount} connection strings from web.config for {ProjectName}", webConnStrings.Count, msg.File.Name);
+                _graphActor.Tell(new Messages.SpecifyConnectionStrings(msg.File.DirectoryName, msg.File.Name, webConnStrings));
+
             }
 
         });
     }
 
+    private async Task<List<ConnectionString>> ExtractConnectionStringsFromAppConfig(string path)
+    {
+        List<ConnectionString> result = new();
+
+        var xmlText = await File.ReadAllTextAsync(path);
+        var xDoc = XDocument.Parse(xmlText);
+
+        var connectionStringsElements = xDoc.Descendants("connectionStrings").FirstOrDefault();
+        if (connectionStringsElements is null)
+        {
+            _log.Info("connectionStrings was empty for {ProjectPath}; returning empty result list.", path);
+            return result;
+        }
+
+        var addedConnectionStrings = connectionStringsElements.Descendants().Where(x => string.Equals(x.Name.LocalName, "add", StringComparison.InvariantCultureIgnoreCase));
+
+        foreach (var connectionStringElement in addedConnectionStrings)
+        {
+            var name = connectionStringElement.AttributeCaseInsensitive("name");
+            var connectionString = connectionStringElement.AttributeCaseInsensitive("connectionString");
+            var provider = connectionStringElement.AttributeCaseInsensitive("provider");
+
+            if (name == null)
+            {
+                _log.Warning("Key was null when retrieving an app.config appSetting as part of {ProjectPath}", path);
+            }
+
+            if (connectionString == null)
+            {
+                _log.Warning("Value was null when retrieving an app.config appSetting as part of {ProjectPath}", path);
+            }
+
+            if (name != null && connectionString != null)
+            {
+                result.Add(new ConnectionString(name.Value, connectionString.Value, provider?.Value));
+            }
+        }
+
+        return result;
+
+    }
     private async Task<List<AppSetting>> ExtractAppSettingsFromAppConfig(string path)
     {
         List<AppSetting> result = new();
@@ -90,7 +140,7 @@ public class CsProjectProcessor : ReceiveActor
         var appSettingsElements = xDoc.Descendants("appSettings").FirstOrDefault();
         if (appSettingsElements is null)
         {
-            _log.Info("appSettings was empty for {ProjectPath}; returning empty result list.");
+            _log.Info("appSettings was empty for {ProjectPath}; returning empty result list.", path);
             return result;
         }
 
@@ -158,3 +208,4 @@ public class CsProjectProcessor : ReceiveActor
 
 public record PackageReference(string Name, string Version);
 public record AppSetting(string Name, string Value);
+public record ConnectionString(string Name, string Value, string? Provider);
