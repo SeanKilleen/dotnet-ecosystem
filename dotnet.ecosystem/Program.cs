@@ -3,6 +3,8 @@ using System.CommandLine;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Akka.Actor;
+using Akka.Event;
+using Serilog;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -16,22 +18,30 @@ public class Messages
 
 public class CsProjectProcessor : ReceiveActor
 {
+    ILoggingAdapter _log = Context.GetLogger();
     public CsProjectProcessor()
     {
+
         Receive<Messages.ProcessProject>(msg =>
         {
-            AnsiConsole.MarkupLine($"Processing [yellow]{msg.File.FullName}[/]");
+            _log.Info("Processing {FilePath}", msg.File.FullName);
+
+            if (!msg.File.Exists)
+            {
+                _log.Warning("File {FilePathak} did not exist", msg.File.FullName);
+            }
         });
     }
 }
 public class ProjFinderActor : ReceiveActor
 {
+    ILoggingAdapter _log = Context.GetLogger();
     public ProjFinderActor()
     {
         var csProjProcessor = Context.ActorSelection("../csProjProcessor");
         Receive<Messages.FindProjects>(msg =>
         {
-            AnsiConsole.WriteLine($"Checking {msg.Path} for .csproj files");
+            _log.Info("Checking {FolderPath} for .csproj files", msg.Path);
             var files = Directory.GetFiles(msg.Path, "*.csproj", SearchOption.AllDirectories);
             foreach (var file in files)
             {
@@ -46,11 +56,18 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        var logger = new LoggerConfiguration()
+        .WriteTo.ColoredConsole()
+        .MinimumLevel.Information()
+        .CreateLogger();
+
+        Serilog.Log.Logger = logger;
+
         string ScanFolder = args[0]; // TODO: Real command parsing & syntax
 
         AnsiConsole.MarkupLine($"[red]R[/][green]G[/][blue]B[/] - Scan Folder is [yellow]{ScanFolder}[/]");
 
-        var system = ActorSystem.Create("dotnet-ecosystem");
+        var system = ActorSystem.Create("dotnet-ecosystem", "akka { loglevel=INFO,  loggers=[\"Akka.Logger.Serilog.SerilogLogger, Akka.Logger.Serilog\"]}");
 
         var finder = system.ActorOf<ProjFinderActor>("projFinder");
         var processor = system.ActorOf<CsProjectProcessor>("csProjProcessor");
