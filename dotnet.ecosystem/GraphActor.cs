@@ -98,5 +98,22 @@ public class GraphActor : ReceiveActor
             }
         });
 
+        ReceiveAsync<Messages.SpecifyConnectionStrings>(async msg =>
+        {
+            await using var session = _driver.AsyncSession();
+
+            foreach (var connectionString in msg.ConnectionStrings)
+            {
+                await session.ExecuteWriteAsync(async tr =>
+                {
+                    var cursor = await tr.RunAsync(@"
+                    MATCH (p:Project { path: $path, name: $name })
+                    MERGE(c:ConnectionString { name: $connectionStringName })
+                    MERGE (p)-[:HAS_CONNECTION_STRING { value: $connectionStringValue, provider: $connectionStringProvider }]->(c)
+                    return p", new { path = msg.Directory, name = msg.ProjectFileName, connectionStringName = connectionString.Name, connectionStringValue = connectionString.Value, connectionStringProvider = connectionString.Provider ?? string.Empty });
+                });
+            }
+        });
+
     }
 }
