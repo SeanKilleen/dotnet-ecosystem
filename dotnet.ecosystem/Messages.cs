@@ -10,4 +10,5 @@ public class Messages
     public record SpecifyTargets(string Directory, string ProjectFileName, IReadOnlyList<string> Targets);
     public record SpecifySdk(string Directory, string ProjectFileName, string SDK);
     public record SpecifyPackages(string Directory, string ProjectFileName, IReadOnlyList<PackageReference> Packages);
+    public record SpecifyAppSettings(string Directory, string ProjectFileName, IReadOnlyList<AppSetting> Settings);
 }
