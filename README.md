@@ -101,3 +101,11 @@ WHERE p.name = "MyProject.csproj"
 return n.name, r.version
 order by n.name
 ```
+
+### App Settings by Count
+
+```cypher
+MATCH (p:Project)-[r:HAS_SETTING]->(s:AppSetting)
+return s.name, count(*)
+order by count(*) desc
+```
