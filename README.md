@@ -109,3 +109,11 @@ MATCH (p:Project)-[r:HAS_SETTING]->(s:AppSetting)
 return s.name, count(*)
 order by count(*) desc
 ```
+
+### Projects With a Setting and their Values
+
+```cypher
+MATCH (p:Project)-[r:HAS_SETTING]->(s:AppSetting)
+where s.name = "MySetting"
+return p.name, r.value
+```
