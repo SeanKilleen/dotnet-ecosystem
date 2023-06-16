@@ -1,10 +1,7 @@
-// See https://aka.ms/new-console-template for more information
-
 using System.Xml.Linq;
 using Akka.Actor;
 using Akka.Event;
 using Microsoft.Build.Construction;
-using Neo4j.Driver;
 
 namespace dotnet.ecosystem;
 
