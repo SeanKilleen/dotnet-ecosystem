@@ -1,10 +1,7 @@
-// See https://aka.ms/new-console-template for more information
-
 using System.Xml.Linq;
 using Akka.Actor;
 using Akka.Event;
 using Microsoft.Build.Construction;
-using Neo4j.Driver;
 
 namespace dotnet.ecosystem;
 
@@ -60,7 +57,68 @@ public class CsProjectProcessor : ReceiveActor
 
             _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, packageReferences));
 
+            var appConfigPath = Path.Combine(msg.File.DirectoryName, "app.config");
+            if (File.Exists(appConfigPath))
+            {
+                _log.Info("Found app.config for {ProjectName}; processing.", msg.File.Name);
+
+                var appSettings = await ExtractAppSettingsFromAppConfig(appConfigPath);
+                _log.Info("Extracted {SettingsCount} app settings from app.config for {ProjectName}", appSettings.Count, msg.File.Name);
+                _graphActor.Tell(new Messages.SpecifyAppSettings(msg.File.DirectoryName, msg.File.Name, appSettings));
+            }
+
+            var webConfigPath = Path.Combine(msg.File.DirectoryName, "web.config");
+            if (File.Exists(webConfigPath))
+            {
+                _log.Info("Found web.config for {ProjectName}; processing.", msg.File.Name);
+
+                var webSettings = await ExtractAppSettingsFromAppConfig(webConfigPath);
+                _log.Info("Extracted {SettingsCount} app settings from web.config for {ProjectName}", webSettings.Count, msg.File.Name);
+                _graphActor.Tell(new Messages.SpecifyAppSettings(msg.File.DirectoryName, msg.File.Name, webSettings));
+            }
+
         });
+    }
+
+    private async Task<List<AppSetting>> ExtractAppSettingsFromAppConfig(string path)
+    {
+        List<AppSetting> result = new();
+
+        var xmlText = await File.ReadAllTextAsync(path);
+        var xDoc = XDocument.Parse(xmlText);
+
+        var appSettingsElements = xDoc.Descendants("appSettings").FirstOrDefault();
+        if (appSettingsElements is null)
+        {
+            _log.Info("appSettings was empty for {ProjectPath}; returning empty result list.");
+            return result;
+        }
+
+        var addedAppSettings = appSettingsElements.Descendants().Where(x => string.Equals(x.Name.LocalName, "add", StringComparison.InvariantCultureIgnoreCase));
+
+        foreach (var settingElement in addedAppSettings)
+        {
+            var key = settingElement.AttributeCaseInsensitive("key");
+            var value = settingElement.AttributeCaseInsensitive("value");
+
+            if (key == null)
+            {
+                _log.Warning("Key was null when retrieving an app.config appSetting as part of {ProjectPath}", path);
+            }
+
+            if (value == null)
+            {
+                _log.Warning("Value was null when retrieving an app.config appSetting as part of {ProjectPath}", path);
+            }
+
+            if (key != null && value != null)
+            {
+                result.Add(new AppSetting(key.Value, value.Value));
+            }
+        }
+
+        return result;
+
     }
 
     private async Task<List<PackageReference>> ExtractPackageFromXMLFile(string path, string elementName, string idAttributeName,
@@ -99,3 +157,4 @@ public class CsProjectProcessor : ReceiveActor
 }
 
 public record PackageReference(string Name, string Version);
+public record AppSetting(string Name, string Value);

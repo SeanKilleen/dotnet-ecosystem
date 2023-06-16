@@ -81,5 +81,22 @@ public class GraphActor : ReceiveActor
             }
         });
 
+        ReceiveAsync<Messages.SpecifyAppSettings>(async msg =>
+        {
+            await using var session = _driver.AsyncSession();
+
+            foreach (var setting in msg.Settings)
+            {
+                await session.ExecuteWriteAsync(async tr =>
+                {
+                    var cursor = await tr.RunAsync(@"
+                    MATCH (p:Project { path: $path, name: $name })
+                    MERGE(s:AppSetting { name: $settingName })
+                    MERGE (p)-[:HAS_SETTING { value: $settingValue }]->(s)
+                    return p", new { path = msg.Directory, name = msg.ProjectFileName, settingName = setting.Name, settingValue = setting.Value });
+                });
+            }
+        });
+
     }
 }
