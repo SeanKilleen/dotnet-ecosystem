@@ -18,10 +18,12 @@ The goal is for this to publish this as a dotnet global tool, but for now it's a
   * [X] csproj file PackageReference
   * [X] packages.config files
 * [ ] Capture config settings & values
-  * [ ] app.confg, web.config, etc.
+  * [ ] app.confg
+  * [ ] web.config
   * [ ] appSettings.*.json
 * [ ] Capture DB connection string names & values
-  * [ ] app.confg, web.config, etc.
+  * [ ] app.confg
+  * [ ] web.config
   * [ ] appSettings.*.json
 * [ ] Capture remote/WCF service references/endpoint names & values
   * [ ] app.confg, web.config, etc.
