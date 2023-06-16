@@ -6,8 +6,8 @@ The goal is for this to publish this as a dotnet global tool, but for now it's a
 
 ## Getting Started
 
-* You should have a neo4j database running. You can do this via a docker container: `docker run -e NEO4J_AUTH=neo4j/admin -p 7474:7474 -p 7687:7687 neo4j:latest`
-  * NOTE: As of now, we have the neo4j auth value hard-coded as `neo4j/admin` in the code, which we'll be working to change soon.
+* You should have a neo4j database running. You can do this via a docker container: `docker run --name neo4j -e NEO4J_AUTH=neo4j/admin123 -p 7474:7474 -p 7687:7687 neo4j:latest`
+  * NOTE: As of now, we have the neo4j auth value hard-coded as `neo4j/admin123` in the code, which we'll be working to change soon.
 
 ## Roadmap
 

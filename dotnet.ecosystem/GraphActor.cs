@@ -14,7 +14,7 @@ public class GraphActor : ReceiveActor
     "bolt://localhost",
     AuthTokens.Basic(
         "neo4j",
-        "admin"
+        "admin123"
     )
 );
     public GraphActor()
