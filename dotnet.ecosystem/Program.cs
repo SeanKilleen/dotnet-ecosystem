@@ -28,7 +28,7 @@ public class CsProjectProcessor : ReceiveActor
 
             if (!msg.File.Exists)
             {
-                _log.Warning("File {FilePathak} did not exist", msg.File.FullName);
+                _log.Warning("File {FilePath} did not exist", msg.File.FullName);
             }
         });
     }
