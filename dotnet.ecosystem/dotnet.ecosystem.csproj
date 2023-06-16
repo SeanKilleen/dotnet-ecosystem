@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="akka" Version="1.5.8" />
+    <PackageReference Include="Akka.DependencyInjection" Version="1.5.8" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.5.7" />
     <PackageReference Include="serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
