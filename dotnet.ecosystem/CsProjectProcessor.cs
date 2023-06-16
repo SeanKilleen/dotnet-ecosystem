@@ -49,8 +49,8 @@ public class CsProjectProcessor : ReceiveActor
             List<PackageReference> packageReferences = new();
             foreach (var packageRefElement in packageRefElements)
             {
-                var name = packageRefElement.Attributes().FirstOrDefault(x=>string.Equals(x.Name.LocalName, "Include", StringComparison.InvariantCultureIgnoreCase));
-                var version = packageRefElement.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, "Version", StringComparison.InvariantCultureIgnoreCase));
+                var name = packageRefElement.AttributeCaseInsensitive("Include");
+                var version = packageRefElement.AttributeCaseInsensitive("Version");
 
                 if (name == null)
                 {
@@ -80,8 +80,8 @@ public class CsProjectProcessor : ReceiveActor
 
                 foreach (var package in packages)
                 {
-                    var name = package.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, "id", StringComparison.InvariantCultureIgnoreCase));
-                    var version = package.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, "version", StringComparison.InvariantCultureIgnoreCase));
+                    var name = package.AttributeCaseInsensitive("id");
+                    var version = package.AttributeCaseInsensitive("version");
 
                     if (name == null)
                     {
