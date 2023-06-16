@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "dotnet.ecosystem": {
+      "commandName": "Project"
+    },
+    "Sean Desktop": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\Repositories"
+    }
+  }
+}
