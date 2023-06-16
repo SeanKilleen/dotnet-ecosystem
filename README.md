@@ -78,3 +78,10 @@ Projects that don't have any associated nuget packages (to double-check the tool
 MATCH (p:Project) WHERE NOT (p)-[:USES]->()
 return p.name
 ```
+
+### Packages by Usage
+```cypher
+MATCH (p:Project)-[r:USES]->(n:NugetPackage)
+return n.name, count(*)
+order by count(*) desc
+```
