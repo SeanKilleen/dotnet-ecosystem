@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Akka.Actor;
 using Akka.Event;
+using Neo4j.Driver;
 using Serilog;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -14,11 +15,42 @@ public class Messages
 {
     public record FindProjects(string Path);
     public record ProcessProject(FileInfo File);
+    public record AddProjectToGraph(string Directory, string ProjectFileName);
 }
 
+public class GraphActor : ReceiveActor
+{
+    ILoggingAdapter _log = Context.GetLogger();
+    // TODO: Obviously fix this
+    IDriver _driver = GraphDatabase.Driver(
+    "bolt://localhost",
+    AuthTokens.Basic(
+        "neo4j",
+        "admin"
+    )
+);
+    public GraphActor()
+    {
+        ReceiveAsync<Messages.AddProjectToGraph>(async msg =>
+        {
+            _log.Info("Adding {ProjectFileName} to graph", msg.ProjectFileName);
+
+            await using var session = _driver.AsyncSession();
+
+            await session.ExecuteWriteAsync(async tr =>
+            {
+                var cursor = await tr.RunAsync(@"
+                    MERGE (p:Project { path: $path, name: $name })
+                    return p", new { path = msg.Directory, name = msg.ProjectFileName });
+            });
+
+        });
+    }
+}
 public class CsProjectProcessor : ReceiveActor
 {
     ILoggingAdapter _log = Context.GetLogger();
+    ActorSelection _graphActor = Context.ActorSelection("../graphActor");
     public CsProjectProcessor()
     {
 
@@ -30,6 +62,8 @@ public class CsProjectProcessor : ReceiveActor
             {
                 _log.Warning("File {FilePath} did not exist", msg.File.FullName);
             }
+
+            _graphActor.Tell(new Messages.AddProjectToGraph(msg.File.DirectoryName, msg.File.Name));
         });
     }
 }
@@ -71,6 +105,7 @@ public class Program
 
         var finder = system.ActorOf<ProjFinderActor>("projFinder");
         var processor = system.ActorOf<CsProjectProcessor>("csProjProcessor");
+        var graphActor = system.ActorOf<GraphActor>("graphActor");
 
         finder.Tell(new Messages.FindProjects(ScanFolder));
 
