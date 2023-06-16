@@ -79,6 +79,13 @@ MATCH (p:Project) WHERE NOT (p)-[:USES]->()
 return p.name
 ```
 
+Projects with no extracted targets:
+
+```cypher
+MATCH (p:Project) WHERE NOT (p)-[:TARGETS]->()
+return p.name
+```
+
 ### Packages by Usage
 ```cypher
 MATCH (p:Project)-[r:USES]->(n:NugetPackage)
