@@ -50,6 +50,20 @@ public class GraphActor : ReceiveActor
             }
         });
 
+        ReceiveAsync<Messages.SpecifySdk>(async msg =>
+        {
+            if (string.IsNullOrWhiteSpace(msg.SDK)) { return; }
+            await using var session = _driver.AsyncSession();
+            await session.ExecuteWriteAsync(async tr =>
+            {
+                var cursor = await tr.RunAsync(@"
+                    MATCH (p:Project { path: $path, name: $name })
+                    MERGE (s:SDK {name: $sdk})
+                    MERGE (p)-[:HAS_SDK]->(s)
+                    return p", new { path = msg.Directory, name = msg.ProjectFileName, sdk = msg.SDK });
+            });
+        });
+
         ReceiveAsync<Messages.SpecifyPackages>(async msg =>
         {
             await using var session = _driver.AsyncSession();

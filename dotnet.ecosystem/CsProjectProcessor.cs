@@ -1,8 +1,10 @@
 // See https://aka.ms/new-console-template for more information
 
+using System.Xml.Linq;
 using Akka.Actor;
 using Akka.Event;
 using Microsoft.Build.Construction;
+using Neo4j.Driver;
 
 namespace dotnet.ecosystem;
 
@@ -10,10 +12,11 @@ public class CsProjectProcessor : ReceiveActor
 {
     ILoggingAdapter _log = Context.GetLogger();
     ActorSelection _graphActor = Context.ActorSelection("../graphActor");
+
     public CsProjectProcessor()
     {
 
-        Receive<Messages.ProcessProject>(msg =>
+        ReceiveAsync<Messages.ProcessProject>(async msg =>
         {
             _log.Info("Processing {FilePath}", msg.File.FullName);
 
@@ -24,10 +27,9 @@ public class CsProjectProcessor : ReceiveActor
 
             _graphActor.Tell(new Messages.AddProjectToGraph(msg.File.DirectoryName, msg.File.Name));
 
-            // TODO: Own actor etc.
-            var projectFile = ProjectRootElement.Open(msg.File.FullName);
-
+            // TODO: Split into actors etc.
             List<string> targetFrameworks = new();
+            var projectFile = ProjectRootElement.Open(msg.File.FullName);
 
             var targetProperties = projectFile.Properties.Where(p => p.Name == "TargetFramework" || p.Name == "TargetFrameworks");
             foreach (var targetProperty in targetProperties)
@@ -37,13 +39,38 @@ public class CsProjectProcessor : ReceiveActor
 
             _graphActor.Tell(new Messages.SpecifyTargets(msg.File.DirectoryName, msg.File.Name, targetFrameworks));
 
-            var packageReferences = projectFile.Items.Where(x => x.ElementName == "PackageReference").ToList();
+            _graphActor.Tell(new Messages.SpecifySdk(msg.File.DirectoryName, msg.File.Name, projectFile.Sdk));
+
+            var xmlText = await File.ReadAllTextAsync(msg.File.FullName);
+            var xDoc = XDocument.Parse(xmlText);
+
+            var packageRefElements = xDoc.Descendants("PackageReference");
+
+            List<PackageReference> packageReferences = new();
+            foreach (var packageRefElement in packageRefElements)
+            {
+                var name = packageRefElement.Attributes().FirstOrDefault(x=>string.Equals(x.Name.LocalName, "Include", StringComparison.InvariantCultureIgnoreCase));
+                var version = packageRefElement.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, "Version", StringComparison.InvariantCultureIgnoreCase));
+
+                if (name == null)
+                {
+                    _log.Warning("Name was null when retrieving a PackageReference as part of {ProjectName}", msg.File.Name);
+                }
+
+                if (version == null)
+                {
+                    _log.Warning("Version was null when retrieving a PackageReference as part of {ProjectName}", msg.File.Name);
+                }
+
+                if (name != null && version != null)
+                {
+                    packageReferences.Add(new PackageReference(name.Value, version.Value));
+                }
+            }
 
             _log.Info("Found {PackageReferenceCount} package references for {ProjectName}", packageReferences.Count, msg.File.Name);
 
-            var items = packageReferences.Select(x => new PackageReference(x.Include, "TODO")).ToList(); // TODO: Figure out how to get version number
-
-            _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, items));
+            _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, packageReferences));
 
         });
     }
