@@ -41,6 +41,10 @@ public class CsProjectProcessor : ReceiveActor
 
             _log.Info("Found {PackageReferenceCount} package references for {ProjectName}", packageReferences.Count, msg.File.Name);
 
+            var items = packageReferences.Select(x => new PackageReference(x.Include, "TODO")).ToList(); // TODO: Figure out how to get version number
+
+            _graphActor.Tell(new Messages.SpecifyPackages(msg.File.DirectoryName, msg.File.Name, items));
+
         });
     }
 }
