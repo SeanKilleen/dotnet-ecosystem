@@ -7,8 +7,8 @@ namespace dotnet.ecosystem;
 
 public class CsProjectProcessor : ReceiveActor
 {
-    readonly ILoggingAdapter _log = Context.GetLogger();
-    readonly ActorSelection _graphActor = Context.ActorSelection("../graphActor");
+    private readonly ILoggingAdapter _log = Context.GetLogger();
+    private readonly ActorSelection _graphActor = Context.ActorSelection("../graphActor");
 
     public CsProjectProcessor()
     {
@@ -28,7 +28,7 @@ public class CsProjectProcessor : ReceiveActor
             List<string> targetFrameworks = new();
             var projectFile = ProjectRootElement.Open(msg.File.FullName);
 
-            var targetProperties = projectFile.Properties.Where(p => p.Name == "TargetFramework" || p.Name == "TargetFrameworks");
+            var targetProperties = projectFile.Properties.Where(p => p.Name is "TargetFramework" or "TargetFrameworks");
             foreach (var targetProperty in targetProperties)
             {
                 targetFrameworks.AddRange(targetProperty.Value.Split(';'));
