@@ -20,7 +20,7 @@ public class CsProjectProcessor : ReceiveActor
     {
         Receive<Messages.ProcessProject>(msg =>
         {
-            AnsiConsole.Markup($"Processing [yellow]{msg.File.FullName}[/]");
+            AnsiConsole.MarkupLine($"Processing [yellow]{msg.File.FullName}[/]");
         });
     }
 }
@@ -31,11 +31,10 @@ public class ProjFinderActor : ReceiveActor
         var csProjProcessor = Context.ActorSelection("../csProjProcessor");
         Receive<Messages.FindProjects>(msg =>
         {
-            AnsiConsole.WriteLine($"Checking {msg.Path} for files");
+            AnsiConsole.WriteLine($"Checking {msg.Path} for .csproj files");
             var files = Directory.GetFiles(msg.Path, "*.csproj", SearchOption.AllDirectories);
             foreach (var file in files)
             {
-                AnsiConsole.WriteLine($"Found {file}");
                 var fileInfo = new FileInfo(file);
                 csProjProcessor.Tell(new Messages.ProcessProject(fileInfo));
             }
