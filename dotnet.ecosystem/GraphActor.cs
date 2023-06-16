@@ -49,5 +49,23 @@ public class GraphActor : ReceiveActor
                 });
             }
         });
+
+        ReceiveAsync<Messages.SpecifyPackages>(async msg =>
+        {
+            await using var session = _driver.AsyncSession();
+
+            foreach (var package in msg.Packages)
+            {
+                await session.ExecuteWriteAsync(async tr =>
+                {
+                    var cursor = await tr.RunAsync(@"
+                    MATCH (p:Project { path: $path, name: $name })
+                    MERGE(n:NugetPackage { name: $packageName })
+                    MERGE (p)-[:USES { version: $packageVersion }]->(n)
+                    return p", new { path = msg.Directory, name = msg.ProjectFileName, packageName = package.Name, packageVersion = package.Version });
+                });
+            }
+        });
+
     }
 }

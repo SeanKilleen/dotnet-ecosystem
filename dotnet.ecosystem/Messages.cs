@@ -8,5 +8,5 @@ public class Messages
     public record ProcessProject(FileInfo File);
     public record AddProjectToGraph(string Directory, string ProjectFileName);
     public record SpecifyTargets(string Directory, string ProjectFileName, IReadOnlyList<string> Targets);
-    public record SpecifyPackages(string Directory, string ProjectFileName, IReadOnlyList<PackageReference> References);
+    public record SpecifyPackages(string Directory, string ProjectFileName, IReadOnlyList<PackageReference> Packages);
 }
