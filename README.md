@@ -51,7 +51,7 @@ where n.name = "FluentAssertions"
 return r.version, count(*)
 ```
 
-### List of Packages With a Given Target
+### List of Projects With a Given Target
 
 ```cypher
 MATCH (p:Project)-[r:TARGETS]->(t:Target)
